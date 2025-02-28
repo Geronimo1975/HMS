@@ -6,7 +6,7 @@ app_name = "patient"
 
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
-    path("appointments", views.appointments, name="appointments"),
+    path("appointments/", views.appointments, name="appointments"),  # Add trailing slash
     path("appointments/<appointment_id>/", views.appointment_detail, name="appointment_detail"),
 
     path("cancel_appointment/<appointment_id>/", views.cancel_appointment, name="cancel_appointment"),

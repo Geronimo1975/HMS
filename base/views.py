@@ -6,9 +6,11 @@ from django.urls import reverse
 from django.http import JsonResponse
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.contrib import messages
 
 import requests
 import stripe
+import uuid
 
 from base import models as base_models
 from doctor import models as doctor_models
@@ -33,53 +35,57 @@ def service_detail(request, service_id):
 def book_appointment(request, service_id, doctor_id):
     service = base_models.Service.objects.get(id=service_id)
     doctor = doctor_models.Doctor.objects.get(id=doctor_id)
-    patient = patient_models.Patient.objects.get(user=request.user)
+    
+    try:
+        patient = patient_models.Patient.objects.get(user=request.user)
+    except patient_models.Patient.DoesNotExist:
+        messages.error(request, "Please complete your patient profile before booking an appointment")
+        return redirect('/')  # Redirect to home page
 
     if request.method == "POST":
+        # Process form data...
         full_name = request.POST.get("full_name")
         email = request.POST.get("email")
         mobile = request.POST.get("mobile")
         gender = request.POST.get("gender")
         address = request.POST.get("address")
-        dob = request.POST.get("dob")
+        dob_value = request.POST.get("dob")
         issues = request.POST.get("issues")
         symptoms = request.POST.get("symptoms")
 
-        # Update patient bio data
+        # Update patient with form data
         patient.full_name = full_name
         patient.email = email
         patient.mobile = mobile
         patient.gender = gender
         patient.address = address
-        patient.dob = dob
+        
+        # Only update DOB if provided
+        if dob_value and dob_value.strip():
+            patient.dob = dob_value
+        
         patient.save()
 
-        # Create appointment object
+        # Create appointment with correct field names
         appointment = base_models.Appointment.objects.create(
-            service=service,
-            doctor=doctor,
             patient=patient,
-            appointment_date=doctor.next_available_appointment_date,
-            issues=issues,
-            symptoms=symptoms,
+            doctor=doctor,
+            service=service,
+            description=issues,  # Using correct field name
+            notes=symptoms,      # Using correct field name
+            status="Pending",
+            appointment_id=str(uuid.uuid4()).split("-")[0]
         )
 
-        # Create a billing objects
-        billing = base_models.Billing()
-        billing.patient = patient
-        billing.appointment = appointment
-        billing.sub_total = appointment.service.cost
-        billing.tax = appointment.service.cost * 5 / 100
-        billing.total = billing.sub_total + billing.tax
-        billing.status = "Unpaid"
-        billing.save()
-
-        return redirect("base:checkout", billing.billing_id)
-
+        messages.success(request, f"Appointment booked successfully: #{appointment.appointment_id}")
+        
+        # Redirect using namespaced URL name pattern
+        return redirect('/patient/')  # Redirect to patient dashboard instead
+        
     context = {
         "service": service,
         "doctor": doctor,
-        "patient": patient,
+        "patient": patient
     }
     return render(request, "base/book_appointment.html", context)
 

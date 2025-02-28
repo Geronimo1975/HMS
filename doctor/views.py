@@ -7,28 +7,47 @@ from base import models as base_models
 
 @login_required
 def dashboard(request):
-    doctor = doctor_models.Doctor.objects.get(user=request.user)
-    appointments = base_models.Appointment.objects.filter(doctor=doctor)
-    notifications = doctor_models.Notification.objects.filter(doctor=doctor)
+    try:
+        doctor = doctor_models.Doctor.objects.get(user=request.user)
+        appointments = base_models.Appointment.objects.filter(doctor=doctor)
+        notifications = doctor_models.Notification.objects.filter(doctor=doctor)
 
-    context = {
-        "appointments": appointments,
-        "notifications": notifications,
-    }
+        context = {
+            "appointments": appointments,
+            "notifications": notifications,
+        }
 
-    return render(request, "doctor/dashboard.html", context)
+        return render(request, "doctor/dashboard.html", context)
+    
+    except doctor_models.Doctor.DoesNotExist:
+        # Handle case when user doesn't have a doctor profile
+        messages.warning(request, "You don't have a doctor profile set up yet.")
+        
+        # Option 1: Show doctor registration form
+        return render(request, "doctor/register_doctor.html", {
+            "title": "Complete Your Doctor Profile",
+            "message": "Please complete your profile to continue as a doctor."
+        })
+        
+        # Option 2: Redirect to home
+        # return redirect('/')
 
 
 @login_required
 def appointments(request):
-    doctor = doctor_models.Doctor.objects.get(user=request.user)
-    appointments = base_models.Appointment.objects.filter(doctor=doctor)
+    try:
+        doctor = doctor_models.Doctor.objects.get(user=request.user)
+        appointments = base_models.Appointment.objects.filter(doctor=doctor)
 
-    context = {
-        "appointments": appointments,
-    }
+        context = {
+            "appointments": appointments,
+        }
 
-    return render(request, "doctor/appointments.html", context)
+        return render(request, "doctor/appointments.html", context)
+    except doctor_models.Doctor.DoesNotExist:
+        messages.error(request, "You don't have a doctor profile yet. Please contact the administrator.")
+        # Use an absolute URL instead of a named URL pattern
+        return redirect('/')  # Redirect to the root URL
 
 
 @login_required

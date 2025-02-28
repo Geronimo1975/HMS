@@ -1,4 +1,4 @@
-#!/home/dci-student/WEBSITE/HMS/my_env/bin/python3.12
+#!/home/dci-student/WEBSITE/HMS/my_env/bin/python
 
 import sys
 import json

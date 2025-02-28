@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
+from dotenv import load_dotenv
+from django.utils import timezone
 
 from environs import Env
 env = Env()
@@ -21,6 +23,8 @@ env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -53,7 +57,7 @@ INSTALLED_APPS = [
     'patient',
 
     'anymail',
-
+    'pages',
 ]
 
 MIDDLEWARE = [
@@ -94,7 +98,11 @@ WSGI_APPLICATION = 'hms_prj.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': env.str('DB_NAME'),
+        'USER': env.str('DB_USER'),
+        'PASSWORD': env.str('DB_PASSWORD'),
+        'HOST': env.str('DB_HOST'),
+        'PORT': env.str('DB_PORT'),
     }
 }
 
@@ -123,7 +131,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Africa/Lagos'
+TIME_ZONE = 'Europe/Berlin'
 
 USE_I18N = True
 
@@ -237,4 +245,6 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success"
     }
 }
+
+APPEND_SLASH = True  # Django will add trailing slashes automatically
 

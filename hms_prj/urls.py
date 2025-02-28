@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from pages import views as pages_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,6 +26,10 @@ urlpatterns = [
     path("auth/", include("userauths.urls")),
     path("doctor/", include("doctor.urls")),
     path("patient/", include("patient.urls")),
+    path('pages/about-us.html', pages_views.about_us, name='about_us'),  # Legacy URL format
+    path('about-us/', pages_views.about_us, name='about_us_new'),        # More Django-like URL
+    path('pages/contact-us.html', pages_views.contact_us, name='contact_us'),  # Legacy URL format
+    path('contact-us/', pages_views.contact_us, name='contact_us_new'),        # More Django-like URL
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
