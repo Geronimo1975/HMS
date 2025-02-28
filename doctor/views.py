@@ -202,27 +202,41 @@ def edit_prescription(request, appointment_id, prescription_id):
 
 @login_required
 def payments(request):
-    doctor = doctor_models.Doctor.objects.get(user=request.user)
-    payments = base_models.Billing.objects.filter(appointment__doctor=doctor, status="Paid")
-
-    context = {
-        "payments": payments,
-    }
-
-    return render(request, "doctor/payments.html", context)
+    try:
+        doctor = doctor_models.Doctor.objects.get(user=request.user)
+        
+        # Get payments related to this doctor
+        appointments = base_models.Appointment.objects.filter(doctor=doctor)
+        billings = base_models.Billing.objects.filter(appointment__in=appointments)
+        
+        context = {
+            "billings": billings
+        }
+        
+        return render(request, "doctor/payments.html", context)
+        
+    except doctor_models.Doctor.DoesNotExist:
+        # Redirect to doctor registration page
+        messages.warning(request, "Please set up your doctor profile first")
+        return redirect('/doctor/')  # Redirect to dashboard
 
 
 @login_required
 def notifications(request):
-    doctor = doctor_models.Doctor.objects.get(user=request.user)
-    notifications = doctor_models.Notification.objects.filter(doctor=doctor, seen=False)
-
-    context = {
-        "notifications": notifications
-    }
-
-    return render(request, "doctor/notifications.html", context)
-
+    try:
+        doctor = doctor_models.Doctor.objects.get(user=request.user)
+        notifications = doctor_models.Notification.objects.filter(doctor=doctor)
+        
+        context = {
+            "notifications": notifications
+        }
+        
+        return render(request, "doctor/notifications.html", context)
+        
+    except doctor_models.Doctor.DoesNotExist:
+        # Redirect to doctor registration page
+        messages.warning(request, "Please set up your doctor profile first")
+        return redirect('/doctor/')  # Redirect to dashboard
 
 
 @login_required
@@ -238,39 +252,34 @@ def mark_noti_seen(request, id):
 
 @login_required
 def profile(request):
-    doctor = doctor_models.Doctor.objects.get(user=request.user)
-    formatted_next_available_appointment_date = doctor.next_available_appointment_date.strftime('%Y-%m-%d')
-    
-    if request.method == "POST":
-        full_name = request.POST.get("full_name")
-        image = request.FILES.get("image")
-        mobile = request.POST.get("mobile")
-        country = request.POST.get("country")
-        bio = request.POST.get("bio")
-        specialization = request.POST.get("specialization")
-        qualifications = request.POST.get("qualifications")
-        years_of_experience = request.POST.get("years_of_experience")
-        next_available_appointment_date = request.POST.get("next_available_appointment_date")
-
-        doctor.full_name = full_name
-        doctor.mobile = mobile
-        doctor.country = country
-        doctor.bio = bio
-        doctor.specialization = specialization
-        doctor.qualifications = qualifications
-        doctor.years_of_experience = years_of_experience
-        doctor.next_available_appointment_date = next_available_appointment_date
-
-        if image != None:
-            doctor.image = image
-
-        doctor.save()
-        messages.success(request, "Profile updated successfully")
-        return redirect("doctor:profile")
-
-    context = {
-        "doctor": doctor,
-        "formatted_next_available_appointment_date": formatted_next_available_appointment_date,
-    }
-
-    return render(request, "doctor/profile.html", context)
+    try:
+        doctor = doctor_models.Doctor.objects.get(user=request.user)
+        
+        # Handle profile view logic
+        if request.method == "POST":
+            # Process profile update form
+            doctor.full_name = request.POST.get("full_name")
+            doctor.email = request.POST.get("email") 
+            doctor.mobile = request.POST.get("mobile")
+            doctor.specialization = request.POST.get("specialization")
+            doctor.qualifications = request.POST.get("qualifications")
+            doctor.years_of_experience = request.POST.get("years_of_experience")
+            doctor.bio = request.POST.get("bio")
+            
+            # Handle image upload if provided
+            if "image" in request.FILES:
+                doctor.image = request.FILES["image"]
+                
+            doctor.save()
+            messages.success(request, "Profile updated successfully")
+            
+        context = {
+            "doctor": doctor
+        }
+        
+        return render(request, "doctor/profile.html", context)
+        
+    except doctor_models.Doctor.DoesNotExist:
+        # Redirect to doctor registration/setup page
+        messages.warning(request, "Please set up your doctor profile first")
+        return redirect('/doctor/')  # Redirect to dashboard which will show the registration form

@@ -14,7 +14,8 @@
                     
                     <p>Please contact the administrator to set up your doctor profile or use our quick setup form below:</p>
                     
-                    <form method="post" action="{% url 'index' %}" enctype="multipart/form-data">
+                    <!-- Update the form action to use the current URL -->
+                    <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="full_name" class="form-label">Full Name</label>
