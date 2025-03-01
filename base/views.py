@@ -262,3 +262,7 @@ def payment_status(request, billing_id):
         "payment_status": payment_status,
     }
     return render(request, "base/payment_status.html", context)
+
+def course_detail_redirect(request, service_id):
+    """Redirect legacy course-detail URLs to the service detail page"""
+    return redirect('service_detail', service_id=service_id)
